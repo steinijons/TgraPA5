@@ -50,12 +50,16 @@ public class Camera {
 		n.normalize();
 		u.normalize();
 		v = n.cross(u);
-
-	}
+	}	
 
 	public void setEye(float x, float y, float z)
 	{
 		eye.set(x, y, z);
+	}
+	
+	public Point3D getEye() 
+	{
+		return eye;	
 	}
 
 	public void slide(float delU, float delV, float delN)
