@@ -8,6 +8,7 @@ import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
+import com.badlogic.gdx.Version;
 import com.badlogic.gdx.Graphics.DisplayMode;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Pixmap;
@@ -31,12 +32,10 @@ public class LabMeshTexGame extends ApplicationAdapter implements InputProcessor
 	private float angle;
 
 	private Camera cam;
-	private Camera topCam;
 	
 	private float fov = 90.0f;
 	
 	float currentTime;
-	float cameraTime;
 	boolean firstFrame = true;
 
 	MeshModel model;
@@ -47,11 +46,26 @@ public class LabMeshTexGame extends ApplicationAdapter implements InputProcessor
 	BSplineMotion motion;
 	BSplineMotion followCam;
 	
+	CamControlPoints CamPoints;
+	
 	Point3D modelPosition;
 	Point3D CameraPosition;
 	
-	private Texture tex;
+	private Texture Moon;
 	private Texture Background;
+	private Texture Earth;
+	private Texture Sun;	
+	private Texture Mercury;
+	private Texture Venus;
+	private Texture Mars;
+	private Texture Jupiter;
+	
+	Point3D Pearth;
+	Point3D Psun;
+	Point3D Pmercury;
+	Point3D Pvenus;
+	Point3D Pmars;
+	Point3D Pjupter;
 	
 	Random rand = new Random();
 
@@ -64,43 +78,35 @@ public class LabMeshTexGame extends ApplicationAdapter implements InputProcessor
 		//Gdx.graphics.setDisplayMode(disp.width, disp.height, true);
 
 		shader = new Shader();
-
-		tex = new Texture(Gdx.files.internal("textures/phobos2k.png"));
-		Background = new Texture(Gdx.files.internal("textures/starsky-1024.png"));
+		
+		CamPoints = new CamControlPoints();
+		
+		Background = new Texture(Gdx.files.internal("textures/stars.jpg"));
+		Moon = new Texture(Gdx.files.internal("textures/phobos2k.png"));
+		Earth = new Texture(Gdx.files.internal("textures/earth__.jpg"));
+		Sun = new Texture(Gdx.files.internal("textures/2k_sun.jpg"));
+		Mercury = new Texture(Gdx.files.internal("textures/mercury.jpg"));
+		Venus = new Texture(Gdx.files.internal("textures/venus.jpg"));
+		Mars = new Texture(Gdx.files.internal("textures/venus.jpg"));
+		Jupiter = new Texture(Gdx.files.internal("textures/jupiter.jpg"));
+		
 		model = G3DJModelLoader.loadG3DJFromFile("testModel.g3dj");
-
-		//motion = new LinearMotion(new Point3D(-1, 4, -1), new Point3D(1, 6, 1), 2.0f, 3.0f);
 		
-		/*Bmotion = new BezierMotion(new Point3D(-1, 4, -1), new Point3D(1, 6, 1), 
-									new Point3D(7, 6, -4), new Point3D(1, 3, 1),
-									2.0f, 3.0f);
-		*/
+		CamPoints.initialCameraPoints();
 		
-		ArrayList<Point3D> controlPoints = new ArrayList<Point3D>();
-		controlPoints.add(new Point3D(0.4f, 2.0f, 1.0f));
-		controlPoints.add(new Point3D(2.7f, 5.0f, 0.2f));
-		controlPoints.add(new Point3D(3.5f, 2.0f, 0.9f));
-		controlPoints.add(new Point3D(6.8f, 7.0f, 0.0f));
-		controlPoints.add(new Point3D(0.0f, 6.0f, 2.0f));
-		controlPoints.add(new Point3D(2.3f, 5.0f, 2.0f));
-		controlPoints.add(new Point3D(4.0f, -2.0f, 2.5f));
-		controlPoints.add(new Point3D(6.9f, -5.0f, 2.0f));
-		controlPoints.add(new Point3D(0.0f, 6.0f, 4.4f));
-		controlPoints.add(new Point3D(2.2f, 2.0f, 4.0f));
-		controlPoints.add(new Point3D(4.0f, 4.0f, 4.0f));
-		controlPoints.add(new Point3D(6.0f, 7.0f, 4.8f));
-		controlPoints.add(new Point3D(0.5f, 4.0f, 6.0f));
-		controlPoints.add(new Point3D(2.0f, -2.0f, 6.0f));
-		controlPoints.add(new Point3D(4.0f, 1.0f, 6.0f));
-		controlPoints.add(new Point3D(6.0f, 3.0f, 6.0f));
-		
-		motion = new BSplineMotion(controlPoints, 3.0f, 20.0f);
-		
-		followCam = new BSplineMotion(controlPoints, 3.0f, 20.0f);
+		motion = new BSplineMotion(CamPoints.getControlPoints(), 0.0f, 20.0f);
+		//followCam = new BSplineMotion(CamPoints.getControlPoints(), 0.0f, 20.0f);
 		
 		
 		modelPosition = new Point3D();
-		CameraPosition = new Point3D();
+		
+		
+		Pearth = new Point3D();
+		Psun = new Point3D(0.0f, 4.0f, 0.0f);
+		Pmercury = new Point3D();
+		Pvenus = new Point3D();
+		Pmars = new Point3D();
+		Pjupter = new Point3D();
 		
 		BoxGraphic.create();
 		SphereGraphic.create();
@@ -110,23 +116,6 @@ public class LabMeshTexGame extends ApplicationAdapter implements InputProcessor
 		shader.setModelMatrix(ModelMatrix.main.getMatrix());
 
 		cam = new Camera();
-		//cam.look(new Point3D(0f, 4f, -3f), new Point3D(0,4,0), new Vector3D(0,1,0));
-
-		topCam = new Camera();
-		//orthoCam.orthographicProjection(-5, 5, -5, 5, 3.0f, 100);
-		topCam.perspectiveProjection(30.0f, 1, 3, 100);
-
-		//TODO: try this way to create a texture image
-		/*Pixmap pm = new Pixmap(128, 128, Format.RGBA8888);
-		for(int i = 0; i < pm.getWidth(); i++)
-		{
-			for(int j = 0; j < pm.getWidth(); j++)
-			{
-				pm.drawPixel(i, j, rand.nextInt());
-			}
-		}
-		tex = new Texture(pm);*/
-
 		Gdx.gl.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	}
 
@@ -138,39 +127,36 @@ public class LabMeshTexGame extends ApplicationAdapter implements InputProcessor
 	{
 		float deltaTime = Gdx.graphics.getDeltaTime();
 		
-		if(firstFrame)
-		{
+		if(firstFrame){
 			currentTime = 0.0f;
-			cameraTime = -0.3f;
 			firstFrame = false;
-		}
-		else
-		{
+		}else{
 			currentTime += Gdx.graphics.getRawDeltaTime();
-			cameraTime += Gdx.graphics.getRawDeltaTime();
 		}		
 
+		
+		
 		angle += 180.0f * deltaTime;
 
-		if(Gdx.input.isKeyPressed(Input.Keys.A)) {
-			cam.slide(-3.0f * deltaTime, 0, 0);
+		/*if(Gdx.input.isKeyPressed(Input.Keys.A)) {
+			cam.slide(-30.0f * deltaTime, 0, 0);
 		}
 		if(Gdx.input.isKeyPressed(Input.Keys.D)) {
-			cam.slide(3.0f * deltaTime, 0, 0);
+			cam.slide(30.0f * deltaTime, 0, 0);
 		}
 		if(Gdx.input.isKeyPressed(Input.Keys.W)) {
-			cam.slide(0, 0, -3.0f * deltaTime);
+			cam.slide(0, 0, -30.0f * deltaTime);
 			//cam.walkForward(3.0f * deltaTime);
 		}
 		if(Gdx.input.isKeyPressed(Input.Keys.S)) {
-			cam.slide(0, 0, 3.0f * deltaTime);
+			cam.slide(0, 0, 30.0f * deltaTime);
 			//cam.walkForward(-3.0f * deltaTime);
 		}
 		if(Gdx.input.isKeyPressed(Input.Keys.R)) {
-			cam.slide(0, 3.0f * deltaTime, 0);
+			cam.slide(0, 30.0f * deltaTime, 0);
 		}
 		if(Gdx.input.isKeyPressed(Input.Keys.F)) {
-			cam.slide(0, -3.0f * deltaTime, 0);
+			cam.slide(0, -30.0f * deltaTime, 0);
 		}
 
 		if(Gdx.input.isKeyPressed(Input.Keys.LEFT)) {
@@ -206,10 +192,10 @@ public class LabMeshTexGame extends ApplicationAdapter implements InputProcessor
 		{
 			Gdx.graphics.setDisplayMode(500, 500, false);
 			Gdx.app.exit();
-		}
+		}*/
 		
 		motion.getCurrentPosition(currentTime, modelPosition);
-		followCam.getCurrentPosition(cameraTime, CameraPosition);
+		//followCam.getCurrentPosition(cameraTime, CameraPosition);
 		//Bmotion.getCurrentPosition(currentTime, modelPosition);
 		
 		//do all updates to the game
@@ -227,102 +213,193 @@ public class LabMeshTexGame extends ApplicationAdapter implements InputProcessor
 		Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
 		//Gdx.gl.glBlendFunc(GL20.GL_ONE, GL20.GL_ONE);
 		//Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE);
+		ModelMatrix.main.loadIdentityMatrix();
+		
+		//Camera settings
+		cameraSettings();	
+		//BackGround		
+		space();		
+		//All planets
+		drawPlanets();
+		
+		displayBezierPoints();
 
-		for(int viewNum = 0; viewNum < 2; viewNum++)
-		{
-			if(viewNum == 0)
-			{
-				//Gdx.gl.glViewport(0, 0, Gdx.graphics.getWidth() / 2, Gdx.graphics.getHeight());
-				cam.perspectiveProjection(fov, (float)Gdx.graphics.getWidth() / (float)(2*Gdx.graphics.getHeight()), 0.2f, 100.0f);
-				shader.setViewMatrix(cam.getViewMatrix());
-				shader.setProjectionMatrix(cam.getProjectionMatrix());
-				//shader.setEyePosition(cam.eye.x, cam.eye.y, cam.eye.z, 1.0f);
-				//cam.setEye(CameraPosition.x, CameraPosition.y, CameraPosition.z);
-				cam.look(CameraPosition, modelPosition, new Vector3D(0,1,0));
-				
-			}
-			else
-			{
-				/*Gdx.gl.glViewport(Gdx.graphics.getWidth() / 2, 0, Gdx.graphics.getWidth() / 2, Gdx.graphics.getHeight());
-				topCam.look(new Point3D(cam.eye.x, 20.0f, cam.eye.z), cam.eye, new Vector3D(0,0,-1));
-				//orthoCam.look(new Point3D(7.0f, 40.0f, -7.0f), new Point3D(7.0f, 0.0f, -7.0f), new Vector3D(0,0,-1));
-				topCam.perspectiveProjection(30.0f, (float)Gdx.graphics.getWidth() / (float)(2*Gdx.graphics.getHeight()), 3, 100);
-				shader.setViewMatrix(topCam.getViewMatrix());
-				shader.setProjectionMatrix(topCam.getProjectionMatrix());
-				shader.setEyePosition(topCam.eye.x, topCam.eye.y, topCam.eye.z, 1.0f);*/
-			}
+		//shader.setLightPosition(0.0f + c * 3.0f, 5.0f, 0.0f + s * 3.0f, 1.0f);
+		shader.setLightPosition(0.0f, 4.0f, 0.0f, 1.0f);
+		//shader.setLightPosition(cam.eye.x, cam.eye.y, cam.eye.z, 1.0f);
+		shader.setSpotDirection(-cam.n.x, -cam.n.y, -cam.n.z, 0.0f);
+		//shader.setSpotExponent(0.0f);
+		shader.setConstantAttenuation(1.0f);
+		shader.setLinearAttenuation(0.00f);
+		shader.setQuadraticAttenuation(0.00f);
 
+		//shader.setLightColor(s2, 0.4f, c2, 1.0f);
+		shader.setLightColor(1.0f, 1.0f, 1.0f, 1.0f);
+		
+		shader.setGlobalAmbient(0.3f, 0.3f, 0.3f, 1);			
+		
+	}
+
+	public void displayBezierPoints() {
+		ModelMatrix.main.pushMatrix();
+		ModelMatrix.main.addTranslation(0.0f, 4.0f, 0.0f);	
+		ModelMatrix.main.addScale(0.01f, 0.01f, 0.01f);
+		shader.setModelMatrix(ModelMatrix.main.getMatrix());
+		SphereGraphic.drawSolidSphere(shader, Sun);
+		ModelMatrix.main.popMatrix();
+	}
 	
-			//BoxGraphic.drawOutlineCube();
-			//SphereGraphic.drawSolidSphere();
-			//SphereGraphic.drawOutlineSphere();
+	private void space() {
+		// TODO Auto-generated method stub
+		
+		shader.setMaterialDiffuse(1.0f, 1.0f, 1.0f, 1.0f);
+		shader.setMaterialSpecular(1.0f, 1.0f, 1.0f, 1.0f);
+		shader.setShininess(1.0f);
+		shader.setMaterialEmission(0, 0, 0, 1);
+		
+		//Background
+		ModelMatrix.main.pushMatrix();
+		ModelMatrix.main.addTranslation(0.0f, 0.0f, 0.0f);
+		ModelMatrix.main.addScale(50f, 50f, 50f);
+		shader.setModelMatrix(ModelMatrix.main.getMatrix());
+		SphereGraphic.drawSolidSphere(shader, Background);			
+		ModelMatrix.main.popMatrix();		
+	}
 
+	private void drawPlanets() {
+		
+		float s = (float)Math.sin((angle / 2.0) * Math.PI / 180.0);
+		float c = (float)Math.cos((angle / 2.0) * Math.PI / 180.0);
+		
+		shader.setMaterialDiffuse(0.0f, 0.0f, 1.0f, 1.0f);
+		shader.setMaterialSpecular(1.0f, 1.0f, 1.0f, 1.0f);
+		shader.setShininess(50.0f);
+		shader.setMaterialEmission(0, 0, 0, 1);
+		
+		//The SUN
+		
+		ModelMatrix.main.pushMatrix();
+		ModelMatrix.main.addTranslation(0.0f, 4.0f, 0.0f);	
+		ModelMatrix.main.addScale(2.5f, 2.5f, 2.5f);
+		ModelMatrix.main.addRotation(angle/100, new Vector3D(1,1,1));
+		shader.setModelMatrix(ModelMatrix.main.getMatrix());
+		//BoxGraphic.drawSolidCube(shader, tex);
+		SphereGraphic.drawSolidSphere(shader, Sun);
+		//model.draw(shader);		
+		ModelMatrix.main.popMatrix();
+		
+		//Mercury
+		
+		s = (float)Math.sin((angle / 13) * Math.PI / 180.0);
+		c = (float)Math.cos((angle / 13) * Math.PI / 180.0);
+		
+		ModelMatrix.main.pushMatrix();	
+		ModelMatrix.main.addTranslation(0.0f + c * 8f , 4.0f, 0.0f + s * 8f);
+		Pmercury.set(0.0f + c * 8f , 4.0f, 0.0f + s * 8f);
+		ModelMatrix.main.addScale(0.038f, 0.038f, 0.038f);
+		ModelMatrix.main.addRotation(angle/100, new Vector3D(1,1,1));
+		shader.setModelMatrix(ModelMatrix.main.getMatrix());
+		SphereGraphic.drawSolidSphere(shader, Mercury);
+		//model.draw(shader);		
+		ModelMatrix.main.popMatrix();
+		
+		//Venus
+		
+		s = (float)Math.sin((angle / 24) * Math.PI / 180.0);
+		c = (float)Math.cos((angle / 24) * Math.PI / 180.0);
+		
+		ModelMatrix.main.pushMatrix();
+		ModelMatrix.main.addTranslation(0.0f + c *13f , 4.0f, 0.0f + s * 13f);
+		Pvenus.set(0.0f + c *13f , 4.0f, 0.0f + s * 13f);
+		//ModelMatrix.main.addTranslation(25.0f, 4.0f, 25.0f);	
+		ModelMatrix.main.addScale(0.095f, 0.095f, 0.095f);
+		ModelMatrix.main.addRotation(angle/100, new Vector3D(1,1,1));
+		shader.setModelMatrix(ModelMatrix.main.getMatrix());
+		SphereGraphic.drawSolidSphere(shader, Venus);		
+		ModelMatrix.main.popMatrix();
+		
+		//Earth
+		
+		s = (float)Math.sin((angle / 29) * Math.PI / 180.0);
+		c = (float)Math.cos((angle / 29) * Math.PI / 180.0);
+		
+		ModelMatrix.main.pushMatrix();
+		ModelMatrix.main.addTranslation(0.0f + c * 14f, 4.0f, 0.0f + s * 14f);	
+		Pearth.set(0.0f + c * 14f, 4.0f, 0.0f + s * 14f);			
+		//ModelMatrix.main.addTranslation(35.0f, 4.0f, 35.0f);	
+		ModelMatrix.main.addScale(0.1f, 0.1f, 0.1f);
+		ModelMatrix.main.addRotation(angle/100, new Vector3D(1,1,1));
+		shader.setModelMatrix(ModelMatrix.main.getMatrix());
+		SphereGraphic.drawSolidSphere(shader, Earth);
+		//model.draw(shader);		
+		ModelMatrix.main.popMatrix();
+		
+		//Moon
 
-			ModelMatrix.main.loadIdentityMatrix();
+		s = (float)Math.sin((angle / 5) * Math.PI / 180.0);
+		c = (float)Math.cos((angle / 5) * Math.PI / 180.0);
+		
+		ModelMatrix.main.pushMatrix();
+		ModelMatrix.main.addTranslation(Pearth.x + c * 0.3f, 4.0f, Pearth.z + s * 0.3f);
+		ModelMatrix.main.addScale(0.025f, 0.0125f, 0.0125f);
+		ModelMatrix.main.addRotation(angle/100, new Vector3D(1,1,1));
+		shader.setModelMatrix(ModelMatrix.main.getMatrix());
+		SphereGraphic.drawSolidSphere(shader, Moon);
+		//model.draw(shader);		
+		ModelMatrix.main.popMatrix();
+		
+		
+		//Mars
+		
+		s = (float)Math.sin((angle / 35) * Math.PI / 180.0);
+		c = (float)Math.cos((angle / 35) * Math.PI / 180.0);
+		
+		ModelMatrix.main.pushMatrix();
+		ModelMatrix.main.addTranslation(0.0f + c * 17f , 4.0f, 0.0f + s * 17f);
+		Pmars.set(0.0f + c * 17f , 4.0f, 0.0f + s * 17f);
+		//ModelMatrix.main.addTranslation(45.0f, 4.0f, 45.0f);	
+		ModelMatrix.main.addScale(0.053f, 0.05f, 0.053f);
+		ModelMatrix.main.addRotation(angle/100, new Vector3D(1,1,1));
+		shader.setModelMatrix(ModelMatrix.main.getMatrix());
+		SphereGraphic.drawSolidSphere(shader, Mars);
+		//model.draw(shader);		
+		ModelMatrix.main.popMatrix();
+		
+		//Jupiter
+		
+		s = (float)Math.sin((angle / 47) * Math.PI / 180.0);
+		c = (float)Math.cos((angle / 47) * Math.PI / 180.0);
+		
+		ModelMatrix.main.pushMatrix();
+		ModelMatrix.main.addTranslation(0.0f + c * 22.5f , 4.0f, 0.0f + s * 22.5f);
+		Pjupter.set(0.0f + c * 22.5f , 4.0f, 0.0f + s * 22.5f);
+		//ModelMatrix.main.addTranslation(60.0f, 4.0f, 60.0f);	
+		ModelMatrix.main.addScale(1.12f, 1.12f, 1.12f);
+		ModelMatrix.main.addRotation(angle/100, new Vector3D(1,1,1));
+		shader.setModelMatrix(ModelMatrix.main.getMatrix());
+		SphereGraphic.drawSolidSphere(shader, Jupiter);
+		//model.draw(shader);		
+		ModelMatrix.main.popMatrix();
+		
+		
+	}
 
-			//ModelMatrix.main.addRotationZ(angle);
-
-			float s = (float)Math.sin((angle / 2.0) * Math.PI / 180.0);
-			float c = (float)Math.cos((angle / 2.0) * Math.PI / 180.0);
-
-			shader.setLightPosition(0.0f + c * 3.0f, 5.0f, 0.0f + s * 3.0f, 1.0f);
-			//shader.setLightPosition(3.0f, 4.0f, 0.0f, 1.0f);
-			//shader.setLightPosition(cam.eye.x, cam.eye.y, cam.eye.z, 1.0f);
-
-
-			float s2 = Math.abs((float)Math.sin((angle / 1.312) * Math.PI / 180.0));
-			float c2 = Math.abs((float)Math.cos((angle / 1.312) * Math.PI / 180.0));
-
-			shader.setSpotDirection(s2, -0.3f, c2, 0.0f);
-			//shader.setSpotDirection(-cam.n.x, -cam.n.y, -cam.n.z, 0.0f);
-			shader.setSpotExponent(0.0f);
-			shader.setConstantAttenuation(1.0f);
-			shader.setLinearAttenuation(0.00f);
-			shader.setQuadraticAttenuation(0.00f);
-
-			//shader.setLightColor(s2, 0.4f, c2, 1.0f);
-			shader.setLightColor(1.0f, 1.0f, 1.0f, 1.0f);
-			
-			shader.setGlobalAmbient(0.3f, 0.3f, 0.3f, 1);
-
-			//shader.setMaterialDiffuse(s, 0.4f, c, 1.0f);
-			shader.setMaterialDiffuse(1.0f, 1.0f, 1.0f, 1.0f);
-			shader.setMaterialSpecular(1.0f, 1.0f, 1.0f, 1.0f);
-			//shader.setMaterialSpecular(0.0f, 0.0f, 0.0f, 1.0f);
-			shader.setMaterialEmission(0, 0, 0, 1);
-			shader.setShininess(50.0f);
-
-			ModelMatrix.main.pushMatrix();
-			//ModelMatrix.main.addTranslation(0.0f, 4.0f, 0.0f);
-
-			ModelMatrix.main.addTranslation(modelPosition.x, modelPosition.y, modelPosition.z);
-			
-			//ModelMatrix.main.addRotation(angle, new Vector3D(1,1,1));
-			shader.setModelMatrix(ModelMatrix.main.getMatrix());
-
-			//BoxGraphic.drawSolidCube(shader, tex);
-			SphereGraphic.drawSolidSphere(shader, tex);
-			//model.draw(shader);
-			
-			ModelMatrix.main.popMatrix();
-	
-			//BackGround
-				
-			ModelMatrix.main.pushMatrix();
-			
-			shader.setMaterialDiffuse(1.0f, 1.0f, 1.0f, 1.0f);
-			shader.setMaterialSpecular(1.0f, 1.0f, 1.0f, 1.0f);
-			shader.setShininess(250.0f);
-			shader.setMaterialEmission(0, 0, 0, 1);
-			ModelMatrix.main.addTranslation(0.0f, 0.0f, 0.0f);
-			ModelMatrix.main.addScale(40f, 40f, 40f);
-			shader.setModelMatrix(ModelMatrix.main.getMatrix());
-			SphereGraphic.drawSolidSphere(shader, Background);
-			
-			ModelMatrix.main.popMatrix();
-			
-			drawPyramids();
-		}
+	private void cameraSettings() {
+		// TODO Auto-generated method stub
+		ModelMatrix.main.addTranslation(modelPosition.x, modelPosition.y, modelPosition.z);		
+		
+		shader.setMaterialDiffuse(1.0f, 1.0f, 1.0f, 1.0f);
+		shader.setMaterialSpecular(1.0f, 1.0f, 1.0f, 1.0f);
+		shader.setShininess(1.0f);
+		shader.setMaterialEmission(0, 0, 0, 1);
+		
+		
+		cam.perspectiveProjection(fov, (float)Gdx.graphics.getWidth() / (float)(2*Gdx.graphics.getHeight()), 0.2f, 100.0f);
+		shader.setViewMatrix(cam.getViewMatrix());
+		shader.setProjectionMatrix(cam.getProjectionMatrix());
+		//shader.setEyePosition(cam.eye.x, cam.eye.y, cam.eye.z, 1.0f);
+		//cam.setEye(CameraPosition.x, CameraPosition.y, CameraPosition.z);
+		cam.look(cam.getEye(), modelPosition , new Vector3D(0,1,0));
 	}
 
 	@Override
@@ -333,67 +410,6 @@ public class LabMeshTexGame extends ApplicationAdapter implements InputProcessor
 		update();
 		display();
 
-	}
-
-	private void drawPyramids()
-	{
-		int maxLevel = 9;
-
-		for(int pyramidNr = 0; pyramidNr < 2; pyramidNr++)
-		{
-			ModelMatrix.main.pushMatrix();
-			if(pyramidNr == 0)
-			{
-				shader.setMaterialDiffuse(0.8f, 0.8f, 0.2f, 0.1f);
-				shader.setMaterialSpecular(1.0f, 1.0f, 1.0f, 1.0f);
-				shader.setShininess(150.0f);
-				shader.setMaterialEmission(0, 0, 0, 1);
-				ModelMatrix.main.addTranslation(0.0f, 0.0f, -7.0f);
-			}
-			else
-			{
-				shader.setMaterialDiffuse(0.5f, 0.3f, 1.0f, 0.8f);
-				shader.setMaterialSpecular(1.0f, 1.0f, 1.0f, 1.0f);
-				shader.setShininess(150.0f);
-				shader.setMaterialEmission(0, 0, 0, 1);
-				ModelMatrix.main.addTranslation(0.0f, 0.0f, 7.0f);
-			}
-			ModelMatrix.main.pushMatrix();
-			for(int level = 0; level < maxLevel; level++)
-			{
-	
-				ModelMatrix.main.addTranslation(0.55f, 1.0f, -0.55f);
-	
-				ModelMatrix.main.pushMatrix();
-				for(int i = 0; i < maxLevel-level; i++)
-				{
-					ModelMatrix.main.addTranslation(1.1f, 0, 0);
-					ModelMatrix.main.pushMatrix();
-					for(int j = 0; j < maxLevel-level; j++)
-					{
-						ModelMatrix.main.addTranslation(0, 0, -1.1f);
-						ModelMatrix.main.pushMatrix();
-						if(i % 2 == 0)
-						{
-							ModelMatrix.main.addScale(0.2f, 1, 1);
-						}
-						else
-						{
-							ModelMatrix.main.addScale(1, 1, 0.2f);
-						}
-						shader.setModelMatrix(ModelMatrix.main.getMatrix());
-
-						BoxGraphic.drawSolidCube(shader, null);
-						//BoxGraphic.drawSolidCube(shader, tex);
-						ModelMatrix.main.popMatrix();
-					}
-					ModelMatrix.main.popMatrix();
-				}
-				ModelMatrix.main.popMatrix();
-			}
-			ModelMatrix.main.popMatrix();
-			ModelMatrix.main.popMatrix();
-		}
 	}
 
 	@Override

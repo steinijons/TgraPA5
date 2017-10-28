@@ -50,7 +50,7 @@ public class Camera {
 		n.normalize();
 		u.normalize();
 		v = n.cross(u);
-	}	
+	}
 
 	public void setEye(float x, float y, float z)
 	{

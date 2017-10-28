@@ -45,6 +45,10 @@ public class ModelMatrix extends Matrix {
 		matrix.put(13, matrix.get(1)*Tx + matrix.get(5)*Ty + matrix.get(9)*Tz + matrix.get(13));
 		matrix.put(14, matrix.get(2)*Tx + matrix.get(6)*Ty + matrix.get(10)*Tz + matrix.get(14));
 	}
+	
+	public void RotateAroundPlanet(Point3D planet, float Tx, float Ty, float Tz)
+	{
+	}
 
 	public void addScale(float Sx, float Sy, float Sz)
 	{
