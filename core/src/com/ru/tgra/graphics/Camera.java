@@ -51,6 +51,11 @@ public class Camera {
 		u.normalize();
 		v = n.cross(u);
 	}
+	
+	public void setPlanetToLookAt(Point3D planet)
+	{
+		eye = planet;
+	}
 
 	public void setEye(float x, float y, float z)
 	{

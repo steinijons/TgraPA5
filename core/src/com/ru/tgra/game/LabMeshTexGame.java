@@ -1,26 +1,21 @@
 package com.ru.tgra.game;
 
 
-import java.util.ArrayList;
-import java.util.Random;
+import java.io.File;
+
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
 
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
-import com.badlogic.gdx.Version;
 import com.badlogic.gdx.Graphics.DisplayMode;
 import com.badlogic.gdx.graphics.GL20;
-import com.badlogic.gdx.graphics.Pixmap;
-import com.badlogic.gdx.graphics.Pixmap.Format;
-import com.badlogic.gdx.graphics.g3d.environment.SphericalHarmonics;
-import com.badlogic.gdx.math.collision.Sphere;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.TextureData;
 import com.ru.tgra.graphics.*;
 import com.ru.tgra.graphics.motion.BSplineMotion;
-import com.ru.tgra.graphics.motion.BezierMotion;
-import com.ru.tgra.graphics.motion.LinearMotion;
 import com.ru.tgra.graphics.shapes.*;
 import com.ru.tgra.graphics.shapes.g3djmodel.G3DJModelLoader;
 import com.ru.tgra.graphics.shapes.g3djmodel.MeshModel;
@@ -67,15 +62,19 @@ public class LabMeshTexGame extends ApplicationAdapter implements InputProcessor
 	Point3D Pmars;
 	Point3D Pjupter;
 	
-	Random rand = new Random();
-
+	
+	
 	@Override
 	public void create () {
-
+		
+		File ThemeSong = new File("sound/JohnMurphySunshine(AdagioInDMinor).wav");
+		
+		playSound(ThemeSong);
+		
 		Gdx.input.setInputProcessor(this);
 
-		//DisplayMode disp = Gdx.graphics.getDesktopDisplayMode();
-		//Gdx.graphics.setDisplayMode(disp.width, disp.height, true);
+		DisplayMode disp = Gdx.graphics.getDesktopDisplayMode();
+		Gdx.graphics.setDisplayMode(disp.width, disp.height, true);
 
 		shader = new Shader();
 		
@@ -94,7 +93,7 @@ public class LabMeshTexGame extends ApplicationAdapter implements InputProcessor
 		
 		CamPoints.initialCameraPoints();
 		
-		motion = new BSplineMotion(CamPoints.getControlPoints(), 0.0f, 20.0f);
+		motion = new BSplineMotion(CamPoints.getControlPoints(), 0.0f, 190.0f);
 		//followCam = new BSplineMotion(CamPoints.getControlPoints(), 0.0f, 20.0f);
 		
 		
@@ -119,6 +118,7 @@ public class LabMeshTexGame extends ApplicationAdapter implements InputProcessor
 		Gdx.gl.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	}
 
+	
 	private void input()
 	{
 	}
@@ -187,12 +187,13 @@ public class LabMeshTexGame extends ApplicationAdapter implements InputProcessor
 		if(Gdx.input.isKeyPressed(Input.Keys.G)) {
 			fov += 30.0f * deltaTime;
 		}
-
+*/
 		if(Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE))
 		{
 			Gdx.graphics.setDisplayMode(500, 500, false);
 			Gdx.app.exit();
-		}*/
+		}
+		
 		
 		motion.getCurrentPosition(currentTime, modelPosition);
 		//followCam.getCurrentPosition(cameraTime, CameraPosition);
@@ -222,7 +223,6 @@ public class LabMeshTexGame extends ApplicationAdapter implements InputProcessor
 		//All planets
 		drawPlanets();
 		
-		displayBezierPoints();
 
 		//shader.setLightPosition(0.0f + c * 3.0f, 5.0f, 0.0f + s * 3.0f, 1.0f);
 		shader.setLightPosition(0.0f, 4.0f, 0.0f, 1.0f);
@@ -240,15 +240,6 @@ public class LabMeshTexGame extends ApplicationAdapter implements InputProcessor
 		
 	}
 
-	public void displayBezierPoints() {
-		ModelMatrix.main.pushMatrix();
-		ModelMatrix.main.addTranslation(0.0f, 4.0f, 0.0f);	
-		ModelMatrix.main.addScale(0.01f, 0.01f, 0.01f);
-		shader.setModelMatrix(ModelMatrix.main.getMatrix());
-		SphereGraphic.drawSolidSphere(shader, Sun);
-		ModelMatrix.main.popMatrix();
-	}
-	
 	private void space() {
 		// TODO Auto-generated method stub
 		
@@ -340,7 +331,7 @@ public class LabMeshTexGame extends ApplicationAdapter implements InputProcessor
 		c = (float)Math.cos((angle / 5) * Math.PI / 180.0);
 		
 		ModelMatrix.main.pushMatrix();
-		ModelMatrix.main.addTranslation(Pearth.x + c * 0.3f, 4.0f, Pearth.z + s * 0.3f);
+		ModelMatrix.main.addTranslation(Pearth.x + c * 0.6f, 4.0f, Pearth.z + s * 0.6f);
 		ModelMatrix.main.addScale(0.025f, 0.0125f, 0.0125f);
 		ModelMatrix.main.addRotation(angle/100, new Vector3D(1,1,1));
 		shader.setModelMatrix(ModelMatrix.main.getMatrix());
@@ -401,7 +392,7 @@ public class LabMeshTexGame extends ApplicationAdapter implements InputProcessor
 		//cam.setEye(CameraPosition.x, CameraPosition.y, CameraPosition.z);
 		cam.look(cam.getEye(), modelPosition , new Vector3D(0,1,0));
 	}
-
+	
 	@Override
 	public void render () {
 		
@@ -411,6 +402,20 @@ public class LabMeshTexGame extends ApplicationAdapter implements InputProcessor
 		display();
 
 	}
+	
+	//https://www.youtube.com/watch?v=QVrxiJyLTqU
+	private void playSound(File themeSong) {
+		// TODO Auto-generated method stub
+		try {
+			Clip clip = AudioSystem.getClip();
+			clip.open(AudioSystem.getAudioInputStream(themeSong));
+			clip.start();
+		}catch(Exception e)
+		{
+			
+		}
+	}
+
 
 	@Override
 	public boolean keyDown(int keycode) {
